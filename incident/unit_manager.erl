@@ -10,68 +10,68 @@
 
 %%% API Functions
 start_link() ->
-    io:format("Starting unit_manager gen_server~n"),
+    error_logger:info_msg("Starting unit_manager gen_server~n"),
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 get_units() ->
-    io:format("Fetching all units~n"),
+    error_logger:info_msg("Fetching all units~n"),
     gen_server:call(?MODULE, get_units).
 
 get_preferred_unit() ->
-    io:format("Requesting preferred unit~n"),
+    error_logger:info_msg("Requesting preferred unit~n"),
     gen_server:call(?MODULE, get_preferred_unit).
 
 assign_preferred_unit() ->
-    io:format("Assigning preferred unit~n"),
+    error_logger:info_msg("Assigning preferred unit~n"),
     gen_server:call(?MODULE, assign_preferred_unit).
 
 unit_availability_changed(UnitPid, Availability) ->
-    io:format("Updating availability for unit with PID ~p to ~p~n", [UnitPid, Availability]),
+    error_logger:info_msg("Updating availability for unit with PID ~p to ~p~n", [UnitPid, Availability]),
     gen_server:cast(?MODULE, {availability_changed, UnitPid, Availability}).
 
 update_distance(Pid, Distance) ->
-    % io:format("Updating distance for unit with PID ~p to ~p~n", [Pid, Distance]),
+    % error_logger:info_msg("Updating distance for unit with PID ~p to ~p~n", [Pid, Distance]),
     gen_server:cast(?MODULE, {update_distance, Pid, Distance}).
 
 %%% gen_server callbacks 
 init([]) ->
-    io:format("Initializing unit_manager gen_server with 10 units~n"),
+    error_logger:info_msg("Initializing unit_manager gen_server with 10 units~n"),
     Units = [start_unit() || _ <- lists:seq(1, 10)],
     {ok, Units}.
 
 handle_call(get_preferred_unit, _From, State) ->
-    io:format("Handling get_preferred_unit call~n"),
+    error_logger:info_msg("Handling get_preferred_unit call~n"),
     AvailableUnits = lists:filter(fun ({unit, _, _, IsAvailable}) -> IsAvailable end, State),
     SortedUnits = lists:sort(fun compare_units_by_distance/2, AvailableUnits),
     PreferredUnit = case SortedUnits of
         [] -> 
-            io:format("No units available~n"),
+            error_logger:info_msg("No units available~n"),
             undefined; % Return undefined if no units are available
         _ -> 
-            io:format("Returning preferred unit~n"),
+            error_logger:info_msg("Returning preferred unit~n"),
             hd(SortedUnits)
     end,
     {reply, PreferredUnit, State};
 
 handle_call(assign_preferred_unit, _From, State) ->
-    io:format("Handling assign_preferred_unit call~n"),
+    error_logger:info_msg("Handling assign_preferred_unit call~n"),
     case get_preferred_unit(State) of
         {error, no_available_units} ->
-            io:format("No units available to assign~n"),
+            error_logger:info_msg("No units available to assign~n"),
             {reply, {error, no_available_units}, State};
         {ok, Pid, UpdatedState} ->
             %% Call the unit to set its availability to false
-            io:format("Setting availability to false for unit with PID ~p~n", [Pid]),
+            error_logger:info_msg("Setting availability to false for unit with PID ~p~n", [Pid]),
             unit:set_availability(Pid, false),
             {reply, {ok, Pid}, UpdatedState}
     end;
 
 handle_call(get_units, _From, State) ->
-    io:format("Handling get_units call~n"),
+    error_logger:info_msg("Handling get_units call~n"),
     {reply, State, State}.
 
 handle_cast({update_distance, UnitPid, Distance}, State) ->
-    % io:format("Updating distance for unit with PID ~p~n", [UnitPid]),
+    % error_logger:info_msg("Updating distance for unit with PID ~p~n", [UnitPid]),
     UpdatedState = lists:map(fun
         ({unit, Pid, _, IsAvailable}) when Pid == UnitPid ->
             {unit, Pid, Distance, IsAvailable};
@@ -80,7 +80,7 @@ handle_cast({update_distance, UnitPid, Distance}, State) ->
     {noreply, UpdatedState};
 
 handle_cast({availability_changed, UnitPid, Availability}, State) ->
-    io:format("Received availability update for PID ~p. New availability: ~p~n", [UnitPid, Availability]),
+    error_logger:info_msg("Received availability update for PID ~p. New availability: ~p~n", [UnitPid, Availability]),
     UpdatedState = lists:map(fun
         ({unit, Pid, Distance, _} = _Unit) when Pid == UnitPid ->
             {unit, Pid, Distance, Availability};
@@ -89,15 +89,15 @@ handle_cast({availability_changed, UnitPid, Availability}, State) ->
     {noreply, UpdatedState}.
 
 handle_info(_Info, State) ->
-    io:format("Received unhandled info message in unit_manager gen_server~n"),
+    error_logger:info_msg("Received unhandled info message in unit_manager gen_server~n"),
     {noreply, State}.
 
 terminate(_Reason, _State) ->
-    io:format("Terminating unit_manager gen_server~n"),
+    error_logger:info_msg("Terminating unit_manager gen_server~n"),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
-    io:format("Code change in unit_manager gen_server~n"),
+    error_logger:info_msg("Code change in unit_manager gen_server~n"),
     {ok, State}.
 
 %%% Private Functions
@@ -105,17 +105,17 @@ compare_units_by_distance({unit, _, Dist1, _}, {unit, _, Dist2, _}) ->
     Dist1 < Dist2.
 
 get_preferred_unit(State) ->
-    io:format("Fetching preferred unit~n"),
+    error_logger:info_msg("Fetching preferred unit~n"),
     AvailableUnits = lists:filter(fun ({unit, _, _, IsAvailable}) -> IsAvailable end, State),
     SortedUnits = lists:sort(fun compare_units_by_distance/2, AvailableUnits),
     case SortedUnits of
         [] ->
-            io:format("No available units found~n"),
+            error_logger:info_msg("No available units found~n"),
             {error, no_available_units};
         [{unit, Pid, Distance, _IsAvailable} | Rest] ->
             UpdatedUnit = {unit, Pid, Distance, false},
             NewState = [UpdatedUnit | Rest] ++ lists:subtract(State, [hd(SortedUnits)]),
-            io:format("Selected preferred unit with PID ~p~n", [Pid]),
+            error_logger:info_msg("Selected preferred unit with PID ~p~n", [Pid]),
             {ok, Pid, NewState}
     end.
 

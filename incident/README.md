@@ -1,10 +1,10 @@
-# **Incident Reporting and Management System**
+# **Incident Management**
 
-This Erlang application simulates an incident management process, streamlining the reporting of incidents, assigning them to available units, monitoring their progress, and ensuring timely resolution.
+This Erlang application simulates a process for managing incidents with actors.
 
 ## **Overview**
 
-Operators can use this system to manage reported incidents. Once an incident is reported, a dedicated incident actor (a process in Erlang) springs into action. This actor interacts with the dispatch manager to secure a suitable unit for the incident. If the incident remains unresolved within a pre-defined time window (40 seconds), the actor reaches out to the operator to determine further actions. An incident's closure will release its assigned unit, and the corresponding incident actor is terminated, ensuring optimal resource management.
+Operators can use this system to manage reported incidents. Once an incident is reported, a dedicated incident actor is spawned. This actor interacts with the dispatch manager to secure a suitable unit for the incident. If the incident remains unresolved within a pre-defined time window (40 seconds), the actor reaches out to the operator to determine further actions. An incident's closure releases its assigned unit, and the actor is terminated.
 
 ## **Prerequisites**
 
@@ -95,7 +95,7 @@ Respond with:
 - `y`: The incident is closed and removed from the `dispatch_operator`.
 - `n`: The incident remains under monitoring and will prompt again.
 
-## **Cleanup Mechanism**
+## Cleanup Mechanism
 
 When an incident concludes:
 
@@ -103,7 +103,7 @@ When an incident concludes:
 - The designated unit is apprised of the incident's closure and returned to the available pool.
 - The incident actor is terminated.
 
-## **System Actors & Their Responsibilities**
+## System Actors & Their Responsibilities
 
 1. **unit_manager**: Manages units and seeks the best fit for incidents.
 2. **Unit**: Notifies the `unit_manager` of its status and position. As of now, doesn't pursue any specific goals.
@@ -112,9 +112,9 @@ When an incident concludes:
 
 ## Other Functions
 
-### Retrieve assigned incidents\*\*:
+### Retrieve assigned incidents:
 
-Review ongoing incidents under the watch of `dispatch_operator`:
+Review the `dispatch_operator`'s ongoing incidents:
 
 ```erlang
 dispatch_operator:get_active_incidents().

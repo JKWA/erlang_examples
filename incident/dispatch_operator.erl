@@ -22,7 +22,7 @@ get_active_incidents() ->
     gen_server:call(?SERVER, get_active_incidents).
 
 close_incident(IncidentPid) ->
-    gen_server:cast(?SERVER, {close_incident, IncidentPid}).
+    gen_server:cast(IncidentPid, external_close).
 
 %%% gen_server callbacks
 
@@ -38,7 +38,7 @@ handle_cast({report_incident, Type, Description, Severity}, State) ->
     {noreply, State#state{incidents = [IncidentPid | State#state.incidents]}};
 
 handle_cast({close_incident, IncidentPid}, State) ->
-    IncidentPid ! close,
+    gen_server:cast(IncidentPid, external_close),
     NewIncidents = lists:delete(IncidentPid, State#state.incidents),
     {noreply, State#state{incidents = NewIncidents}}.
 
@@ -47,7 +47,7 @@ handle_info({incident_not_closed, Description, IncidentPid}, State) ->
     {noreply, State};
 
 handle_info(Msg, State) ->
-    io:format("Unhandled message: ~p~n", [Msg]),
+    error_logger:error_msg("Unhandled message: ~p~n", [Msg]),
     {noreply, State}.
 
 %%% Private Functions
