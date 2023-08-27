@@ -27,22 +27,27 @@ close_incident(IncidentPid) ->
 %%% gen_server callbacks
 
 init([]) ->
+    error_logger:info_msg("Initializing dispatch operator"),
     {ok, #state{}}.
 
 handle_call(get_active_incidents, _From, State) ->
     {reply, State#state.incidents, State}.
 
 handle_cast({report_incident, Type, Description, Severity}, State) ->
+    error_logger:error_msg("Dispatch is spawning new incident for: ~p~n", [Description]),
     {ok, IncidentPid} = incident:start_link(),
     incident:report(IncidentPid, {Type, Description, Severity}, self()),
     {noreply, State#state{incidents = [IncidentPid | State#state.incidents]}};
 
 handle_cast({close_incident, IncidentPid}, State) ->
+    error_logger:error_msg("Dispatch is terminating: ~p~n", [IncidentPid]),
+
     gen_server:cast(IncidentPid, external_close),
     NewIncidents = lists:delete(IncidentPid, State#state.incidents),
     {noreply, State#state{incidents = NewIncidents}}.
 
 handle_info({incident_not_closed, Description, IncidentPid}, State) ->
+    error_logger:error_msg("Spawining new process to talk to operator about: ~p~n", [Description]),
     spawn(fun() -> handle_user_input(Description, IncidentPid) end),
     {noreply, State};
 

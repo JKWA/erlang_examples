@@ -33,7 +33,7 @@ handle_call(_Request, _From, State) ->
 
 handle_cast({set_availability, Availability}, State) ->
     %% Notify the manager about the change in availability
-    error_logger:info_msg("Received availability update for PID ~p. New availability: ~p~n", [set_availability, Availability]),
+    error_logger:info_msg("Received availability update for PID ~p. New availability: ~p~n", [self(), Availability]),
 
     unit_manager:unit_availability_changed(self(), Availability),
     {noreply, State#state{is_available = Availability}};

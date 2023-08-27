@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 %%% External API exports
--export([start_link/0, report/3, close/0]).
+-export([start_link/0, report/3, close/1]).
 
 %%% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -26,9 +26,9 @@ report(Pid, {Type, Description, Severity}, OperatorPid) when Severity >= 1, Seve
     error_logger:info_msg("Reporting an incident of type: ~s with description: ~s and severity: ~p~n", [Type, Description, Severity]),
     gen_server:call(Pid, {report, Type, Description, Severity, OperatorPid}).
 
-close() ->
-    error_logger:info_msg("Closing current incident~n"),
-    gen_server:cast(self(), external_close).
+close(Pid) ->
+    error_logger:info_msg("Closing incident with PID ~p~n", [Pid]),
+    gen_server:cast(Pid, external_close).
 
 %%% gen_server callbacks
 init([]) ->
@@ -53,7 +53,7 @@ handle_call({report, Type, Description, Severity, OperatorPid}, _From, _State) -
     end.
 
 handle_cast(external_close, State) ->
-    error_logger:info_msg("External close request received in incident gen_server~n"),
+    error_logger:info_msg("External close request received~n"),
     NewState = internal_close(State),
     {noreply, NewState}.
 
