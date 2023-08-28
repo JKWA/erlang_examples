@@ -16,7 +16,10 @@ start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 report_incident(Type, Description, Severity) ->
-    gen_server:cast(?SERVER, {report_incident, Type, Description, Severity}).
+    IncidentId = erlang:make_ref(),
+    gen_server:cast(?SERVER, {report_incident, IncidentId, Type, Description, Severity}),
+    IncidentId.
+
 
 get_active_incidents() ->
     gen_server:call(?SERVER, get_active_incidents).
@@ -33,11 +36,11 @@ init([]) ->
 handle_call(get_active_incidents, _From, State) ->
     {reply, State#state.incidents, State}.
 
-handle_cast({report_incident, Type, Description, Severity}, State) ->
+handle_cast({report_incident, IncidentId, Type, Description, Severity}, State) ->
     error_logger:error_msg("Dispatch is spawning new incident for: ~p~n", [Description]),
     {ok, IncidentPid} = incident:start_link(),
-    incident:report(IncidentPid, {Type, Description, Severity}, self()),
-    {noreply, State#state{incidents = [IncidentPid | State#state.incidents]}};
+    incident:report(IncidentPid, IncidentId, {Type, Description, Severity}, self()),
+    {noreply, State#state{incidents = [{IncidentId, IncidentPid} | State#state.incidents]}};
 
 handle_cast({close_incident, IncidentPid}, State) ->
     error_logger:error_msg("Dispatch is terminating: ~p~n", [IncidentPid]),

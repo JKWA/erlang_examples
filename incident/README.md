@@ -39,6 +39,7 @@ Operators can use this system to manage reported incidents. Once an incident is 
    ```erlang
     c(unit_manager).
     c(dispatch_operator).
+    c(incident_supervisor).
     c(incident).
     c(unit).
    ```
@@ -52,6 +53,7 @@ Operators can use this system to manage reported incidents. Once an incident is 
    ```erlang
    unit_manager:start_link().
    dispatch_operator:start_link().
+   incident_supervisor:start_link().
    ```
 
    Erlang uses the colon like others use periods.  
