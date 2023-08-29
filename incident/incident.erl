@@ -124,55 +124,6 @@ initialize_incident(IncidentId, {Type, Description, Severity, OperatorPid}, Unit
                            timer = TimerRef}}
     end.
 
-
-
-
-% initialize_incident(IncidentId, {Type, Description, Severity, OperatorPid}) ->
-%     case unit_manager:assign_preferred_unit() of
-%         {error, no_available_units} = Error -> 
-%             error_logger:warning_msg("No units available for the incident~n"),
-%             {stop, Error};
-%         {ok, UnitPid} -> 
-%             error_logger:info_msg("Assigned unit with PID: ~p for the incident~n", [UnitPid]),
-%             TimerRef = erlang:send_after(40000, self(), {incident_not_resolved, OperatorPid}),
-%             {ok, #incident{incident_id = IncidentId,
-%                            type = Type,
-%                            description = Description,
-%                            severity = Severity,
-%                            operator_pid = OperatorPid,
-%                            unit_pid = UnitPid,
-%                            timer = TimerRef}}
-%     end.
-
-% initialize_incident(IncidentId, {Type, Description, Severity, OperatorPid, UnitPid}) ->
-%     case UnitPid of
-%         undefined ->
-%             % If it's a new incident, assign a preferred unit and start a timer.
-%             case unit_manager:assign_preferred_unit() of
-%                 {error, no_available_units} = Error -> 
-%                     error_logger:warning_msg("No units available for the incident~n"),
-%                     {stop, Error};
-%                 {ok, NewUnitPid} -> 
-%                     error_logger:info_msg("Assigned unit with PID: ~p for the incident~n", [NewUnitPid]),
-%                     TimerRef = erlang:send_after(40000, self(), {incident_not_resolved, OperatorPid}),
-%                     {ok, #incident{incident_id = IncidentId,
-%                                    type = Type,
-%                                    description = Description,
-%                                    severity = Severity,
-%                                    operator_pid = OperatorPid,
-%                                    unit_pid = NewUnitPid,
-%                                    timer = TimerRef}}
-%             end;
-%         _ ->
-%             error_logger:info_msg("Incident ~p is being recovered~n", [Description]),
-%             {ok, #incident{incident_id = IncidentId,
-%                            type = Type,
-%                            description = Description,
-%                            severity = Severity,
-%                            operator_pid = OperatorPid,
-%                            unit_pid = UnitPid}}
-%     end.
-
 internal_close(State) ->
     error_logger:info_msg("Internally closing incident~n"),
     erlang:cancel_timer(State#incident.timer),
