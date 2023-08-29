@@ -4,7 +4,9 @@ This Erlang application simulates a process for managing incidents with actors.
 
 ## **Overview**
 
-Operators can use this system to manage reported incidents. Once an incident is reported, a dedicated incident actor is spawned. This actor interacts with the dispatch manager to secure a suitable unit for the incident. If the incident remains unresolved within a pre-defined time window (40 seconds), the actor reaches out to the operator to determine further actions. An incident's closure releases its assigned unit, and the actor is terminated.
+When a dispatch operator reports an incident, the information is immediately persisted to disk, and a message is sent to the incident supervisor instructing it to spawn a new incident actor. This actor retrieves the incident data from storage and interacts with the dispatch manager to secure a suitable unit for response. If the incident remains unresolved within a predefined time window (currently 40 seconds), the actor proactively reaches out to the reporting dispatch operator to determine the appropriate next steps. Once an incident is successfully closed, its assigned unit is released, and the corresponding actor is terminated.
+
+In the event that an incident actor unexpectedly crashes, the supervisor will automatically respawn a new actor. This new actor will read the persisted state from storage, check if a unit PID (process identifier) is already associated with the incident, and, if so, skip the unit assignment step and continue working towards resolving the incident.
 
 ## **Prerequisites**
 
@@ -48,7 +50,7 @@ Operators can use this system to manage reported incidents. Once an incident is 
 
 3. **Initialization**:
 
-   Spawn the `unit_manager` and `dispatch_operator` from within the Erlang shell:
+   Spawn the `unit_manager`, `dispatch_operator` and `incident_supervisor` from within the Erlang shell:
 
    ```erlang
    unit_manager:start_link().
@@ -56,7 +58,10 @@ Operators can use this system to manage reported incidents. Once an incident is 
    incident_supervisor:start_link().
    ```
 
-   Erlang uses the colon like others use periods.  
+   The `unit` and `incident` actors are spawened by the `unit_manager` and `incident_supervisor`
+
+   Erlang uses the colon like others use periods.
+
    This is read as, "from unit_manager, call the start_link function".
 
 ## **Usage**
@@ -84,6 +89,8 @@ dispatch_operator:report_incident(Type, Description, Severity).
 ```
 
 **Force an incident to crash**:
+
+You can watch the system reacting to a crash with the dispactch_operator
 
 ```erlang
   dispatch_operator:crash_last().
@@ -113,10 +120,11 @@ When an incident concludes:
 
 ## System Actors & Their Responsibilities
 
-1. **unit_manager**: Manages units and seeks the best fit for incidents.
-2. **Unit**: Notifies the `unit_manager` of its status and position. As of now, doesn't pursue any specific goals.
-3. **incident**: Embodies a reported incident, strives to assign a unit and resolve swiftly.
-4. **dispatch_operator**: Represents the operator, aspires to report and oversee incidents.
+1. **incident_supervisor**: Monitors the incident actors, and is responsible for respawning a new actor in case of unexpected crashes to ensure the incident progresses towards resolution.
+2. **unit_manager**: Responsible for managing the available units and selecting the most suitable one for responding to incidents.
+3. **Unit**: Keeps the `unit_manager` informed of its current status and location. Currently, it does not have any other specific objectives.
+4. **incident**: Represents a reported incident and is responsible for assigning a response unit and facilitating a swift resolution.
+5. **dispatch_operator**: Represents the dispatch operator, whose main responsibilities include reporting incidents and monitoring their progress until resolution.
 
 ## Other Functions
 
@@ -138,12 +146,4 @@ unit_manager:get_units().
 
 ```erlang
 unit_manager:get_preferred_unit().
-```
-
-### Modify Availability for a Specific Unit:
-
-```erlang
-Pid = <The_PID_of_the_Unit>.
-Availability = true | false.
-unit_manager:unit_availability_changed(Pid, Availability).
 ```
