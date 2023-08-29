@@ -19,7 +19,6 @@ start_link(Id, Manager) ->
     gen_server:start_link(?MODULE, {Id, Manager}, []).
 
 set_availability(Pid, Availability) when is_boolean(Availability) ->
-    error_logger:info_msg("Setting availability for PID ~p to ~p~n", [Pid, Availability]),
     gen_server:cast(Pid, {set_availability, Availability}).
 
 %%% gen_server callbacks
@@ -28,12 +27,14 @@ init({Id, Manager}) ->
     send_random_timer(),
     {ok, #state{id = Id, manager = Manager}}.
 
+%%% synchronous callback
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
+%%% synchronous callback
 handle_cast({set_availability, Availability}, State) ->
     %% Notify the manager about the change in availability
-    error_logger:info_msg("Received availability update for PID ~p. New availability: ~p~n", [self(), Availability]),
+    error_logger:info_msg("Unit PID ~p receved message to update its availability to ~p~n", [self(), Availability]),
 
     unit_manager:unit_availability_changed(self(), Availability),
     {noreply, State#state{is_available = Availability}};

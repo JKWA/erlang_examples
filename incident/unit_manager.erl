@@ -14,19 +14,15 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 get_units() ->
-    error_logger:info_msg("Fetching all units~n"),
     gen_server:call(?MODULE, get_units).
 
 get_preferred_unit() ->
-    error_logger:info_msg("Requesting preferred unit~n"),
     gen_server:call(?MODULE, get_preferred_unit).
 
 assign_preferred_unit() ->
-    error_logger:info_msg("Assigning preferred unit~n"),
     gen_server:call(?MODULE, assign_preferred_unit).
 
 unit_availability_changed(UnitPid, Availability) ->
-    error_logger:info_msg("Updating availability for unit with PID ~p to ~p~n", [UnitPid, Availability]),
     gen_server:cast(?MODULE, {availability_changed, UnitPid, Availability}).
 
 update_distance(Pid, Distance) ->
@@ -39,8 +35,8 @@ init([]) ->
     Units = [start_unit() || _ <- lists:seq(1, 10)],
     {ok, Units}.
 
+%%% synchronous callbacks
 handle_call(get_preferred_unit, _From, State) ->
-    error_logger:info_msg("Handling get_preferred_unit call~n"),
     AvailableUnits = lists:filter(fun ({unit, _, _, IsAvailable}) -> IsAvailable end, State),
     SortedUnits = lists:sort(fun compare_units_by_distance/2, AvailableUnits),
     PreferredUnit = case SortedUnits of
@@ -54,22 +50,22 @@ handle_call(get_preferred_unit, _From, State) ->
     {reply, PreferredUnit, State};
 
 handle_call(assign_preferred_unit, _From, State) ->
-    error_logger:info_msg("Handling assign_preferred_unit call~n"),
     case get_preferred_unit(State) of
         {error, no_available_units} ->
             error_logger:info_msg("No units available to assign~n"),
             {reply, {error, no_available_units}, State};
         {ok, Pid, UpdatedState} ->
             %% Call the unit to set its availability to false
-            error_logger:info_msg("Setting availability to false for unit with PID ~p~n", [Pid]),
+            error_logger:info_msg("Tell unit with PID ~p to update its status to false~n", [Pid]),
             unit:set_availability(Pid, false),
             {reply, {ok, Pid}, UpdatedState}
     end;
 
 handle_call(get_units, _From, State) ->
-    error_logger:info_msg("Handling get_units call~n"),
+    error_logger:info_msg("Get all units~n"),
     {reply, State, State}.
 
+%%% asynchronous callbacks
 handle_cast({update_distance, UnitPid, Distance}, State) ->
     % error_logger:info_msg("Updating distance for unit with PID ~p~n", [UnitPid]),
     UpdatedState = lists:map(fun
@@ -80,7 +76,7 @@ handle_cast({update_distance, UnitPid, Distance}, State) ->
     {noreply, UpdatedState};
 
 handle_cast({availability_changed, UnitPid, Availability}, State) ->
-    error_logger:info_msg("Received availability update for PID ~p. New availability: ~p~n", [UnitPid, Availability]),
+    error_logger:info_msg("Manager received availability update for PID ~p. New availability: ~p~n", [UnitPid, Availability]),
     UpdatedState = lists:map(fun
         ({unit, Pid, Distance, _} = _Unit) when Pid == UnitPid ->
             {unit, Pid, Distance, Availability};
@@ -105,7 +101,6 @@ compare_units_by_distance({unit, _, Dist1, _}, {unit, _, Dist2, _}) ->
     Dist1 < Dist2.
 
 get_preferred_unit(State) ->
-    error_logger:info_msg("Fetching preferred unit~n"),
     AvailableUnits = lists:filter(fun ({unit, _, _, IsAvailable}) -> IsAvailable end, State),
     SortedUnits = lists:sort(fun compare_units_by_distance/2, AvailableUnits),
     case SortedUnits of
@@ -132,4 +127,4 @@ start_unit() ->
     CallSign = random_call_sign(),
     Distance = random_distance(),
     {ok, Pid} = unit:start_link(CallSign, Distance),
-    {unit, Pid, Distance, true}. % true signifies that the unit is available by default
+    {unit, Pid, Distance, true}. % unit is available by default

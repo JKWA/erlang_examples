@@ -83,6 +83,12 @@ dispatch_operator:report_incident(Type, Description, Severity).
   dispatch_operator:report_incident("ems", "Accident with injury", 1).
 ```
 
+**Force an incident to crash**:
+
+```erlang
+  dispatch_operator:crash_last().
+```
+
 ### **Incident Alerts**
 
 Should an incident remain unresolved past 40 seconds, the operator receives a prompt:
