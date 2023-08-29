@@ -46,8 +46,6 @@ In the event that an incident actor unexpectedly crashes, the supervisor will au
     c(unit).
    ```
 
-   Erlang uses periods like other languages semicolons.
-
 3. **Initialization**:
 
    Spawn the `unit_manager`, `dispatch_operator` and `incident_supervisor` from within the Erlang shell:
