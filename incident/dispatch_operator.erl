@@ -13,7 +13,7 @@
 
 %%% API Functions
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link({local, ?SERVER}, ?SERVER, [], []).
 
 report_incident(Type, Description, Severity) ->
     gen_server:call(?SERVER, {report_incident, Type, Description, Severity}).

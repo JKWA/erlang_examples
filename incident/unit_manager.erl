@@ -1,5 +1,6 @@
 -module(unit_manager).
 -behaviour(gen_server).
+-define(SERVER, ?MODULE).
 
 %%% External API exports
 -export([start_link/0, get_units/0, update_distance/2, get_preferred_unit/0, unit_availability_changed/2, assign_preferred_unit/0]).
@@ -11,23 +12,23 @@
 %%% API Functions
 start_link() ->
     error_logger:info_msg("Starting unit_manager gen_server~n"),
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+    gen_server:start_link({local, ?SERVER}, ?SERVER, [], []).
 
 get_units() ->
-    gen_server:call(?MODULE, get_units).
+    gen_server:call(?SERVER, get_units).
 
 get_preferred_unit() ->
-    gen_server:call(?MODULE, get_preferred_unit).
+    gen_server:call(?SERVER, get_preferred_unit).
 
 assign_preferred_unit() ->
-    gen_server:call(?MODULE, assign_preferred_unit).
+    gen_server:call(?SERVER, assign_preferred_unit).
 
 unit_availability_changed(UnitPid, Availability) ->
-    gen_server:cast(?MODULE, {availability_changed, UnitPid, Availability}).
+    gen_server:cast(?SERVER, {availability_changed, UnitPid, Availability}).
 
 update_distance(Pid, Distance) ->
     % error_logger:info_msg("Updating distance for unit with PID ~p to ~p~n", [Pid, Distance]),
-    gen_server:cast(?MODULE, {update_distance, Pid, Distance}).
+    gen_server:cast(?SERVER, {update_distance, Pid, Distance}).
 
 %%% gen_server callbacks 
 init([]) ->

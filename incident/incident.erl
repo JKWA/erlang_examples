@@ -1,5 +1,6 @@
 -module(incident).
 -behaviour(gen_server).
+-define(SERVER, ?MODULE).
 
 %%% External API exports
 -export([start_link/1, close/1, crash/1]).
@@ -21,7 +22,7 @@
 %%% API Functions
 start_link(IncidentId) ->
     error_logger:info_msg("Starting gen_server for incident~n"),
-    gen_server:start_link(?MODULE, IncidentId, []).
+    gen_server:start_link(?SERVER, IncidentId, []).
 
 close(Pid) ->
     error_logger:info_msg("Closing incident with PID ~p~n", [Pid]),
