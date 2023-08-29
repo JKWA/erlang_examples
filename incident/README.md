@@ -60,9 +60,12 @@ In the event that an incident actor unexpectedly crashes, the supervisor will au
 
    The `unit` and `incident` actors are spawened by the `unit_manager` and `incident_supervisor`
 
-   Erlang uses the colon like others use periods.
+Erlang has a unique syntax that may be unfamiliar to those accustomed to other programming languages:
 
-   This is read as, "from unit_manager, call the start_link function".
+- The colon `:` is used in a way similar to how other languages use the period `.`. It is used to call a function from a module.
+- The period `.` is used similar to how other languages use the semicolon `;`. It is used to signify the end of a statement or function.
+
+For example, `unit_manager:start_link().` is interpreted as follows: "Call the `start_link` function from the `unit_manager` module and execute it."
 
 ## **Usage**
 
